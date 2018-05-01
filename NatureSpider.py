@@ -100,8 +100,11 @@ class CateSpider(BaseSpider):
         return False
 
     def __show(self, anchors):
+        m = max(map(lambda anchor: len(anchor['name']), anchors))
         for index in range(0, len(anchors)):
-            print(str(index + 1) + ".", ' 频道：' + anchors[index]['name'], ' url：' + str(anchors[index]['url']))
+            print((str(index + 1) + ".").ljust(3),
+                  ' 频道:' + (anchors[index]['name']).ljust(m, ' '),
+                  (' url:' + str(anchors[index]['url']).rjust(10)))
 
     def go(self):
         htmls = self.fetch_content(CateSpider.cate_url)
@@ -121,6 +124,7 @@ class RankSpider(BaseSpider):
     name_pattern = '<span class="video-nickname" title="([\s\S]*?)">'
     number_pattern = '<i class="video-station-num">([\s\S]*?)人</i>'
     hot_number_pattern = '<span class="video-number">([\s\S]*?)</span>'
+    title_pattern = '<span class="video-title" title="([\s\S]*?)">'
 
     def __init__(self, url):
         super(RankSpider, self).__init__()
@@ -141,7 +145,8 @@ class RankSpider(BaseSpider):
             name = re.findall(RankSpider.name_pattern, html)
             number = re.findall(RankSpider.number_pattern, html)
             hot = re.findall(RankSpider.hot_number_pattern, html)
-            anchor = {'name': name, 'number': number, 'hot': hot}
+            title = re.findall(RankSpider.title_pattern, html)
+            anchor = {'name': name, 'number': number, 'hot': hot, 'title': title}
             anchors.append(anchor)
         return anchors
 
@@ -153,7 +158,8 @@ class RankSpider(BaseSpider):
         # strip去除换行与空格
         l = lambda anchor: {'name': anchor['name'][0].strip(),
                             'number': int(anchor['number'][0]),
-                            'hot': anchor['hot'][0]}
+                            'hot': anchor['hot'][0],
+                            'title': anchor['title'][0]}
         return list(map(l, anchors))
 
     def __sort_seed_hot(self, anchor):
@@ -175,9 +181,17 @@ class RankSpider(BaseSpider):
         return anchor['number']
 
     def __show(self, anchors):
+        """
+        数据展示
+        """
+        m = max(map(lambda anchor: len(anchor['name']), anchors))
+
         for index in range(0, len(anchors)):
-            print(str(index + 1) + ".", '主播名字：' + anchors[index]['name'], '  人气：' + str(anchors[index]['hot']),
-                  '  车票：' + str(anchors[index]['number']))
+            print((str(index + 1) + ".").ljust(4),
+                  '主播名字：' + anchors[index]['name'].ljust(m),
+                  '  人气：' + str(anchors[index]['hot']).ljust(5),
+                  '  车票：' + str(anchors[index]['number']).ljust(8),
+                  '  标题：' + str(anchors[index]['title']))
 
     @BaseSpider.count_time
     def go(self):
@@ -191,8 +205,9 @@ class RankSpider(BaseSpider):
 while is_exit:
     c = CateSpider()
     rate_anchors = c.go()
-    cate_number = input("请输入想要查看的频道号码：")
-    if 'exit' == cate_number:
-        break
+    cate_number = input("请输入想要查看的频道号码：\n")
     s = RankSpider(rate_anchors[int(cate_number) - 1]['url'])
     s.go()
+    answer = input('是否继续？Y ，N \n')
+    if 'N' == answer or 'n' == answer:
+        break
