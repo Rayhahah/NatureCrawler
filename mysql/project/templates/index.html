@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>I am index</title>
+{% endblock %}
+
+{% block content %}
+<h1>Hello Stranger</h1>
+{% for obj in teacher_list %}
+<div>
+    <p>id={{ obj.id }}</p>
+    <p>phone={{ obj.phone }}</p>
+</div>
+{% endfor %}
+{% endblock %}
